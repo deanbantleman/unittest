@@ -2,6 +2,7 @@ import requests
 from pprintpp import pprint
 import argparse
 import os
+from datetime import datetime
 
 def get_gists(username):
     gist_api = 'https://api.github.com/users/' + username + '/gists'
@@ -34,6 +35,10 @@ def get_gists(username):
     
     return gists
 
+def creat_configfile(config_file,first_time_stamp):
+    with open(config_file, 'w') as open_file:
+        open_file.write(first_time_stamp)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("user", help="Enter the github user to query")
@@ -41,16 +46,50 @@ def main():
     print(f"Using gihub user: {args.user}")
 
     gists = get_gists(args.user)
+    #first_time_stamp = gists[0]['created_at']
+    gist_creation_time = gists[0]['created_at']
 
-    
+    config_file = "./gist_" + args.user
+
+    if not os.path.isfile(config_file):
+        print("File doesn't exist, creating file")
+       # creat_configfile(config_file,first_time_stamp)
+        creat_configfile(config_file, gist_creation_time)
+        # Loop through gists and print to the screen
+        for page in gists:
+            created_at = page['created_at']
+            html_url = page['html_url']
+            print(f"The gist was created on: {created_at} and the Gist URL is: {html_url}")
+    else:
+        print("File exists")
+        with open(config_file, "r") as read_file:
+            last_query = read_file.read()
+            print(last_query)
+        last_query = datetime.strptime(last_query,'%Y-%m-%dT%H:%M:%SZ')
+        pprint(f"This is the last query: {last_query}")
+        gist_created_date = datetime.strptime(gist_creation_time,'%Y-%m-%dT%H:%M:%SZ')
+        pprint(f"This is the last query: {gist_created_date}")
+
+        if gist_created_date > last_query:
+            pprint("New gists")
+            for page in gists:
+                created_at = page['created_at']
+                html_url = page['html_url']
+                print(f"The gist was created on: {created_at} and the Gist URL is: {html_url}")
+        else:
+            pprint("No new gists")
+
+
 
     #print(gists)
-
+"""
     for page in gists:
             created_at = page['created_at']
             html_url = page['html_url']
             #print(f"The gist was created on: {page['created_at']} and the Gist URL is: {page['html_url']}")
             print(f"The gist was created on: {created_at} and the Gist URL is: {html_url}")
+"""
+
 """
     gists = []
     # Test gihub user PlugFox
